@@ -6,7 +6,11 @@ def load_abi(fname):
     import os.path
     fname = os.path.join(os.path.dirname(__file__), 'abis', fname + '.json')
     with open(fname) as f:
-        return json.load(f)['abi']
+        result = json.load(f)
+        if isinstance(result, list):
+            return result
+        else:
+            return result['abi']
 
 
 class Pool:
@@ -21,9 +25,10 @@ class Pool:
         self.token_contract = self.w3.eth.contract(abi=erc20, address=token)
         self.token = self.token_contract.functions
 
-        self.stableswap = self.w3.eth.contract(abi=load_abi("Stableswap"), address=stable_pool)
+        self.stableswap = self.w3.eth.contract(abi=load_abi("Stableswap"), address=stable_pool).functions
 
         self.N = 0
+        self.UN = 0
         self.underlying_coins = []
         self.coins = []
         self.decimals = []
@@ -32,13 +37,24 @@ class Pool:
         for i in range(10):
             try:
                 c = self.pool.coins(i).call()
+                c = self.w3.eth.contract(abi=erc20, address=c).functions
                 self.coins.append(c)
+                self.decimals.append(int(c.decimals().call()))
                 self.N += 1
                 if i == 0:
-                    pass
-                    # uc = self.w3.eth.contract(abi=erc20)
+                    for j in range(10):
+                        try:
+                            addr = self.stableswap.coins(j).call()
+                        except (BadFunctionCallOutput, ValueError):
+                            break
+                        uc = self.w3.eth.contract(abi=erc20, address=addr).functions
+                        self.underlying_coins.append(uc)
+                        self.underlying_decimals.append(int(uc.decimals().call()))
+                        self.UN += 1
                 else:
+                    self.UN += 1
                     self.underlying_coins.append(c)
+                    self.underlying_decimals.append(self.decimals[-1])
             except (BadFunctionCallOutput, ValueError):
                 if i == 0:
                     raise

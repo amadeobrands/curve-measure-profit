@@ -1,4 +1,4 @@
-from curvestats.cryptometa import Pool
+from curvestats.cryptometastable import Pool
 
 pool = Pool('0x4643A6600eae4851677A1f16d5e40Ef868c71717',
             '0x939986418baFb4E2d82A76E320767Ff02d250203',
